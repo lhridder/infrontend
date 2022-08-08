@@ -8,7 +8,7 @@ import (
 )
 
 func GetAdminHome(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("./views/admin/admin.html", "./views/header.html", "./views/footer.html")
+	tmpl, err := template.ParseFiles("./views/admin/index.html", "./views/admin/header.html", "./views/footer.html")
 	if err != nil {
 		log.Printf("Failed to parse template: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

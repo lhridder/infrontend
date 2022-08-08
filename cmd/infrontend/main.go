@@ -30,11 +30,14 @@ func main() {
 		http.Redirect(w, r, "/client", http.StatusFound)
 	})
 
-	r.Get("/login", infrontend.GetLogin)
-	r.Post("/login", infrontend.PostLogin)
+	r.Route("/auth", func(r chi.Router) {
+		r.Use(infrontend.AuthInverse())
+		r.Get("/login", infrontend.GetLogin)
+		r.Post("/login", infrontend.PostLogin)
 
-	r.Get("/register", infrontend.GetRegister)
-	r.Post("/register", infrontend.PostRegister)
+		r.Get("/register", infrontend.GetRegister)
+		r.Post("/register", infrontend.PostRegister)
+	})
 
 	r.Route("/client", func(r chi.Router) {
 		r.Use(infrontend.Auth())

@@ -13,14 +13,14 @@ button.addEventListener("click", async function() {
             password: pass
         })
     }
-    const res = await fetch('/register', cfg).catch(err => {
+    const res = await fetch('/auth/register', cfg).catch(err => {
         console.log(err)
         return
     })
     if (res.status != 200) {
         showError(res.statusText + "\n" + await res.text())
     } else {
-        window.location.href = "/login";
+        window.location.href = "/auth/login";
     }
 });
 

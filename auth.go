@@ -177,6 +177,7 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 		Name:    "session_token",
 		Value:   sessionuuid.String(),
 		Expires: time.Now().Add(expiration),
+		Path:    "/",
 	})
 }
 
@@ -241,29 +242,67 @@ func Auth() func(next http.Handler) http.Handler {
 
 			cookie, err := r.Cookie("session_token")
 			if err == http.ErrNoCookie {
-				http.Redirect(w, r, "/login", http.StatusFound)
+				http.Redirect(w, r, "/auth/login", http.StatusFound)
 				return
 			}
 
 			sessionuuid, err := uuid.Parse(cookie.Value)
 			if err != nil {
+				http.SetCookie(w, &http.Cookie{
+					Name:   "session_token",
+					MaxAge: -1,
+					Path:   "/",
+				})
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 				return
 			}
 
 			session, err := GetSession(sessionuuid)
 			if err != nil {
+				http.SetCookie(w, &http.Cookie{
+					Name:   "session_token",
+					MaxAge: -1,
+					Path:   "/",
+				})
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 				return
 			}
 
 			if reflect.ValueOf(session).IsZero() {
-				http.Redirect(w, r, "/login", http.StatusFound)
+				http.Redirect(w, r, "/auth/login", http.StatusFound)
 				return
 			}
 
 			requestcontext := context.WithValue(r.Context(), "user", session.User)
+			requestcontext = context.WithValue(requestcontext, "session", sessionuuid)
 			next.ServeHTTP(w, r.WithContext(requestcontext))
+		}
+		return http.HandlerFunc(fn)
+	}
+}
+
+func AuthInverse() func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			cookie, _ := r.Cookie("session_token")
+			if cookie != nil {
+
+				sessionuuid, _ := uuid.Parse(cookie.Value)
+
+				session, _ := GetSession(sessionuuid)
+
+				if reflect.ValueOf(session).IsZero() {
+					http.SetCookie(w, &http.Cookie{
+						Name:   "session_token",
+						MaxAge: -1,
+						Path:   "/",
+					})
+					return
+				}
+				http.Redirect(w, r, "/client", http.StatusFound)
+			}
+
+			next.ServeHTTP(w, r)
 		}
 		return http.HandlerFunc(fn)
 	}
@@ -293,7 +332,7 @@ func GetUserFromRequest(r *http.Request) (User, error) {
 	var useruuid uuid.UUID
 	var ok bool
 	if useruuid, ok = r.Context().Value("user").(uuid.UUID); !ok {
-		return User{}, err
+		return User{}, errors.New("no user context")
 	}
 
 	return GetUser(useruuid)

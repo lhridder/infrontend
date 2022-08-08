@@ -8,7 +8,7 @@ import (
 )
 
 func GetClientHome(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("./views/client/client.html", "./views/header.html", "./views/footer.html")
+	tmpl, err := template.ParseFiles("./views/client/index.html", "./views/client/header.html", "./views/footer.html")
 	if err != nil {
 		log.Printf("Failed to parse template: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -33,4 +33,8 @@ func GetClientHome(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed to execute template: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
+}
+
+func GetLogout(w http.ResponseWriter, r *http.Request) {
+
 }

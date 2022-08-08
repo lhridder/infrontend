@@ -11,7 +11,7 @@ button.addEventListener("click", async function() {
             password: pass
         })
     }
-    const res = await fetch('/login', cfg).catch(err => {
+    const res = await fetch('/auth/login', cfg).catch(err => {
         console.log(err)
         return
     })
