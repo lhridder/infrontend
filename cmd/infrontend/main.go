@@ -41,6 +41,12 @@ func main() {
 		r.Get("/", infrontend.GetClientHome)
 	})
 
+	r.Route("/admin", func(r chi.Router) {
+		r.Use(infrontend.Auth())
+		r.Use(infrontend.Admin())
+		r.Get("/", infrontend.GetAdminHome)
+	})
+
 	r.Route("/api", func(r chi.Router) {
 		r.Use(infrontend.Auth())
 	})

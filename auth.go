@@ -248,6 +248,36 @@ func Auth() func(next http.Handler) http.Handler {
 	}
 }
 
+func Admin() func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			user, err := GetUserFromRequest(r)
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
+
+			if !user.Admin {
+				http.Redirect(w, r, "/client", http.StatusFound)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		}
+		return http.HandlerFunc(fn)
+	}
+}
+
+func GetUserFromRequest(r *http.Request) (User, error) {
+	var useruuid uuid.UUID
+	var ok bool
+	if useruuid, ok = r.Context().Value("user").(uuid.UUID); !ok {
+		return User{}, err
+	}
+
+	return GetUser(useruuid)
+}
+
 func bearerToken(r *http.Request) (string, error) {
 	auth := r.Header.Get("Authorization")
 	if auth == "" {
