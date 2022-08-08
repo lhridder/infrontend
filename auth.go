@@ -16,6 +16,25 @@ import (
 	"time"
 )
 
+type User struct {
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Hash      string `json:"hash"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Suspended bool   `json:"suspended"`
+	Admin     bool   `json:"admin"`
+}
+
+type APItoken struct {
+	User        uuid.UUID `json:"user"`
+	WriteAccess bool      `json:"writeAccess"`
+}
+
+type Session struct {
+	User uuid.UUID `json:"user"`
+}
+
 type pageData struct {
 	Year    string
 	Version string
