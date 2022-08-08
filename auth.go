@@ -241,15 +241,8 @@ func Auth() func(next http.Handler) http.Handler {
 				return
 			}
 
-			user, err := GetUser(session.User)
-			if err != nil {
-				return
-			}
-
-			ctx := context.WithValue(context.Background(), "user", user)
-			r.WithContext(ctx)
-
-			next.ServeHTTP(w, r)
+			requestcontext := context.WithValue(r.Context(), "user", session.User)
+			next.ServeHTTP(w, r.WithContext(requestcontext))
 		}
 		return http.HandlerFunc(fn)
 	}
