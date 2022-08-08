@@ -8,6 +8,8 @@ import (
 
 var GlobalConfig Config
 
+const Version = "0.1-beta"
+
 type Redis struct {
 	Host string `yaml:"host"`
 	Pass string `yaml:"pass"`
@@ -18,6 +20,14 @@ type Config struct {
 	Redis  Redis
 	Listen string `yaml:"listen"`
 	Debug  bool   `yaml:"debug"`
+}
+
+type pageData struct {
+	Year    string
+	Version string
+	Title   string
+	Script  string
+	User    User
 }
 
 func LoadGlobalConfig() error {

@@ -35,13 +35,6 @@ type Session struct {
 	User uuid.UUID `json:"user"`
 }
 
-type pageData struct {
-	Year    string
-	Version string
-	Title   string
-	Script  string
-}
-
 func GetRegister(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("./views/register.html", "./views/header.html", "./views/footer.html")
 	if err != nil {
@@ -72,7 +65,7 @@ func GetLogin(w http.ResponseWriter, r *http.Request) {
 
 	data := pageData{
 		Year:    string(rune(time.Now().Year())),
-		Version: "0.1-beta",
+		Version: Version,
 		Title:   "Login",
 		Script:  "login.js",
 	}
