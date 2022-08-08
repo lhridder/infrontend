@@ -88,21 +88,20 @@ func PostRegister(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 	}
 
-	target, err := findUser(registration.Username)
+	target, _, err := FindUser(registration.Username)
 	if !reflect.ValueOf(target).IsZero() {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("username taken"))
 		return
 	}
 
-	target, err = findUser(registration.Email)
+	target, _, err = FindUser(registration.Email)
 	if !reflect.ValueOf(target).IsZero() {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("email taken"))
 		return
 	}
 
-	log.Println(registration.Password)
 	bytes, err := bcrypt.GenerateFromPassword([]byte(registration.Password), 14)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -112,15 +111,10 @@ func PostRegister(w http.ResponseWriter, r *http.Request) {
 	user.Email = registration.Email
 	user.Username = registration.Username
 	user.Hash = string(bytes)
-	log.Println(user.Hash)
 
-	serializedUser, err := json.Marshal(user)
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	//TODO implement email check and suspend
 
-	useruuid := uuid.New()
-	_, err = rdb.Set(ctx, "user:"+useruuid.String(), string(serializedUser), 0).Result()
+	err = StoreUser(user)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -145,7 +139,7 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 	}
 
-	user, err := findUser(Login.Username)
+	user, useruuid, err := FindUser(Login.Username)
 
 	if reflect.ValueOf(user).IsZero() {
 		log.Println("no user found")
@@ -158,30 +152,20 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 	}
 
-	//TODO give cookie
+	session := Session{
+		User: useruuid,
+	}
 
-}
-
-func findUser(search string) (User, error) {
-	var user User
-
-	users, err := rdb.Keys(ctx, "user:*").Result()
+	sessionuuid, err := StoreSession(session)
 	if err != nil {
-		return user, err
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 
-	for _, item := range users {
-		useruuid, err := uuid.Parse(strings.Split(item, "user:")[1])
-		user, err = GetUser(useruuid)
-		if err != nil {
-			return User{}, err
-		}
-		if user.Email == search || user.Username == search {
-			break
-		}
-	}
-
-	return user, nil
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   sessionuuid.String(),
+		Expires: time.Now().Add(expiration),
+	})
 }
 
 func Auth() func(next http.Handler) http.Handler {
@@ -228,9 +212,16 @@ func Auth() func(next http.Handler) http.Handler {
 				return
 			}
 
-			session, err := GetSession(cookie.Value)
+			sessionuuid, err := uuid.Parse(cookie.Value)
 			if err != nil {
+				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				return
+			}
 
+			session, err := GetSession(sessionuuid)
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
 			}
 
 			if reflect.ValueOf(session).IsZero() {

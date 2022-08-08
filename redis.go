@@ -6,7 +6,12 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"log"
+	"reflect"
+	"strings"
+	"time"
 )
+
+const expiration = 10 * time.Minute
 
 var (
 	rdb *redis.Client
@@ -68,8 +73,8 @@ func GetUser(uuid uuid.UUID) (User, error) {
 	return user, nil
 }
 
-func GetSession(cookie string) (Session, error) {
-	item, err := rdb.Get(ctx, "session:"+cookie).Result()
+func GetSession(uuid uuid.UUID) (Session, error) {
+	item, err := rdb.Get(ctx, "session:"+uuid.String()).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return Session{}, nil
@@ -84,4 +89,83 @@ func GetSession(cookie string) (Session, error) {
 	}
 
 	return session, nil
+}
+
+func FindUser(search string) (User, uuid.UUID, error) {
+	var user User
+
+	users, err := rdb.Keys(ctx, "user:*").Result()
+	if err != nil {
+		return user, uuid.UUID{}, err
+	}
+
+	var useruuid uuid.UUID
+	for _, item := range users {
+		useruuid, err = uuid.Parse(strings.Split(item, "user:")[1])
+		user, err = GetUser(useruuid)
+		if err != nil {
+			return user, uuid.UUID{}, err
+		}
+		if user.Email == search || user.Username == search {
+			break
+		}
+	}
+
+	return user, useruuid, nil
+}
+
+func StoreUser(user User) error {
+	serializedUser, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+
+	var useruuid uuid.UUID
+	for {
+		useruuid = uuid.New()
+
+		search, err := GetUser(useruuid)
+		if err != nil {
+			return err
+		}
+
+		if reflect.ValueOf(search).IsZero() {
+			break
+		}
+	}
+
+	_, err = rdb.Set(ctx, "user:"+useruuid.String(), string(serializedUser), 0).Result()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func StoreSession(session Session) (uuid.UUID, error) {
+	serializedSession, err := json.Marshal(session)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	var sessionuuid uuid.UUID
+	for {
+		sessionuuid = uuid.New()
+
+		search, err := GetSession(sessionuuid)
+		if err != nil {
+			return uuid.UUID{}, err
+		}
+
+		if reflect.ValueOf(search).IsZero() {
+			break
+		}
+	}
+
+	_, err = rdb.Set(ctx, "session:"+sessionuuid.String(), string(serializedSession), expiration).Result()
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	return sessionuuid, nil
 }
