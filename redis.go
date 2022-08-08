@@ -169,3 +169,7 @@ func StoreSession(session Session) (uuid.UUID, error) {
 
 	return sessionuuid, nil
 }
+
+func RemoveSession(uuid uuid.UUID) error {
+	return rdb.Del(ctx, "session:"+uuid.String()).Err()
+}

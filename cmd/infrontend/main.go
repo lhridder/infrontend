@@ -39,6 +39,7 @@ func main() {
 	r.Route("/client", func(r chi.Router) {
 		r.Use(infrontend.Auth())
 		r.Get("/", infrontend.GetClientHome)
+		r.Post("/logout", infrontend.PostLogout)
 	})
 
 	r.Route("/admin", func(r chi.Router) {

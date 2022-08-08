@@ -180,6 +180,27 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func PostLogout(w http.ResponseWriter, r *http.Request) {
+	var sessionuuid uuid.UUID
+	var ok bool
+	if sessionuuid, ok = r.Context().Value("session").(uuid.UUID); !ok {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	err := RemoveSession(sessionuuid)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:   "session_token",
+		MaxAge: -1,
+		Path:   "/",
+	})
+}
+
 func Auth() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
