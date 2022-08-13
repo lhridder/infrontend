@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -21,7 +22,7 @@ func GetClientHome(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := pageData{
-		Year:    string(rune(time.Now().Year())),
+		Year:    strconv.Itoa(time.Now().Year()),
 		Version: Version,
 		Title:   "Client",
 		Script:  "client.js",

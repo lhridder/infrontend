@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -43,8 +44,8 @@ func GetRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := pageData{
-		Year:    string(rune(time.Now().Year())),
-		Version: "0.1-beta",
+		Year:    strconv.Itoa(time.Now().Year()),
+		Version: Version,
 		Title:   "Register",
 		Script:  "register.js",
 	}
@@ -64,7 +65,7 @@ func GetLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := pageData{
-		Year:    string(rune(time.Now().Year())),
+		Year:    strconv.Itoa(time.Now().Year()),
 		Version: Version,
 		Title:   "Login",
 		Script:  "login.js",
