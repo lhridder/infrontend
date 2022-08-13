@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <title>Infrontend - {{ .Title }}</title>
     <link rel="stylesheet" href="https://bootswatch.com/4/darkly/bootstrap.css">
-
+    <script src="/static/{{ .Script }}" defer></script>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <link rel="icon"  type="image/png" href="/static/favicon.png">
@@ -33,13 +33,10 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/client/stats">Statistics</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/client/account">Account</a>
-                </li>
             </ul>
             <ul class="navbar-nav ms-md-auto">
                 <li class="nav-item">
-                    <a class="nav-item">Account</a>
+                    <a class="nav-link" href="/client/account">{{ .User.Username }}</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" id="logout" href="#" onclick="Logout();">Logout</a>
